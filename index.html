@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CashLedger ERP - Local & Cloud Ready</title>
+    <!-- Tailwind CSS for UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .hidden { display: none !important; }
+        
+        /* Print & A4/A5 Scaling CSS */
+        @media print {
+            body * { visibility: hidden; }
+            #printable-statement, #printable-statement * { visibility: visible; }
+            #printable-statement { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
+            .no-print { display: none !important; }
+            @page { margin: 10mm; }
+        }
+        
+        .print-canvas { min-height: 148mm; display: flex; flex-direction: column; }
+    </style>
+</head>
+<body class="text-slate-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- MODULE 1: LICENSE & ACTIVATION SCREEN -->
+    <div id="view-license" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
+            <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-3xl mb-4">🏢</div>
+            <h1 class="text-3xl font-bold text-slate-800 mb-2">CashLedger ERP</h1>
+            <p class="text-sm text-slate-500 mb-6">Professional Business Management</p>
+            
+            <div id="trial-section" class="mb-6 p-4 border border-emerald-200 bg-emerald-50 rounded-xl">
+                <h3 class="font-bold text-emerald-800">Start 7-Day Free Trial</h3>
+                <p class="text-xs text-emerald-600 mb-3">Experience full offline-online features.</p>
+                <button onclick="startTrial()" class="w-full py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition">Start Free Trial</button>
+            </div>
+
+            <div class="border-t border-slate-200 pt-6">
+                <h3 class="font-bold text-slate-700 mb-4">Activate Pro License</h3>
+                <input type="text" id="license-key-input" placeholder="e.g. RENT-12M-XXXX" class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg mb-3 text-center uppercase font-mono tracking-widest focus:ring-2 focus:ring-indigo-500 outline-none">
+                <button onclick="activateLicense()" class="w-full py-3 bg-indigo-900 text-white font-bold rounded-lg hover:bg-indigo-800 transition shadow-lg">Activate Software</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="main-app" class="flex-1 flex flex-col hidden h-full">
+        
+        <!-- GLOBAL HEADER -->
+        <header class="bg-slate-900 text-white p-4 shadow-md flex justify-between items-center shrink-0">
+            <div class="flex items-center gap-3">
+                <div id="hdr-logo" class="text-3xl bg-white/10 p-2 rounded-lg">🏢</div>
+                <div>
+                    <h1 id="hdr-company-name" class="text-xl font-bold tracking-wide">ICON BRAND SOLUTIONS</h1>
+                    <p id="hdr-license-info" class="text-xs text-emerald-400">License: Active (Local Storage)</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-4 border-r border-slate-700 pr-6">
+                    <button onclick="syncToCloud()" class="text-slate-300 hover:text-white transition text-sm flex items-center gap-1" title="Cloud Sync">☁️ <span id="sync-status-txt">Offline Mode</span></button>
+                    <button onclick="backupLocalData()" class="text-slate-300 hover:text-white transition text-sm flex items-center gap-1" title="Export Local Backup">💾 Backup</button>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-bold" id="logged-user-name">Md. Ziarul Islam</p>
+                    <p class="text-xs text-emerald-400" id="logged-user-role">Administrator</p>
+                </div>
+                <button onclick="lockSystem()" class="px-3 py-1 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded transition text-sm">Lock</button>
+            </div>
+        </header>
+
+        <!-- MAIN SCROLLABLE CONTENT AREA -->
+        <main class="flex-1 overflow-y-auto p-6 bg-slate-50 relative">
+            
+            <!-- VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="max-w-6xl mx-auto space-y-6 transition-all duration-300">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-500">Financial Overview</h2>
+                        <p class="text-sm text-slate-400 font-bold text-indigo-500" id="current-date-display"></p>
+                    </div>
+                    <div class="flex gap-8">
+                        <div class="text-right">
+                            <p class="text-xs font-bold text-emerald-600 uppercase">Total Received (In)</p>
+                            <p class="text-2xl font-bold text-slate-800" id="dash-total-in">৳ 0</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-bold text-red-500 uppercase">Total Payment (Out)</p>
+                            <p class="text-2xl font-bold text-slate-800" id="dash-total-out">৳ 0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Action Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div onclick="switchView('view-transaction')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-indigo-400 hover:shadow-md cursor-pointer transition group">
+                        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">➕</div>
+                        <h3 class="text-lg font-bold text-slate-800">New Transaction</h3>
+                        <p class="text-xs text-slate-500 mt-1">Multi-row Invoice & Cash Entry</p>
+                    </div>
+
+                    <div onclick="switchView('view-ledger-data')" class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-2xl shadow-lg border border-slate-700 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition group">
+                        <div class="w-12 h-12 bg-slate-700 text-white rounded-xl flex items-center justify-center text-2xl mb-4 group-hover:rotate-6 transition">📒</div>
+                        <h3 class="text-lg font-bold text-white">Central Ledger</h3>
+                        <p class="text-xs text-slate-300 mt-1">View entries, filter & statements</p>
+                    </div>
+
+                    <div onclick="switchView('view-settings')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-orange-400 hover:shadow-md cursor-pointer transition group">
+                        <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">⚙️</div>
+                        <h3 class="text-lg font-bold text-slate-800">Settings & Admin</h3>
+                        <p class="text-xs text-slate-500 mt-1">Branding & Local Storage Reset</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: NEW TRANSACTION FORM -->
+            <div id="view-transaction" class="max-w-4xl mx-auto hidden transition-all duration-300">
+                <button onclick="switchView('view-dashboard')" class="text-sm font-bold text-slate-500 hover:text-indigo-600 transition flex items-center gap-2 mb-4">⬅️ Back to Dashboard</button>
+                
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-2xl font-bold text-slate-800 border-b pb-2 mb-6">Create New Transaction</h2>
+                    
+                    <form id="trx-form" onsubmit="saveTransaction(event)">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Date</label>
+                                <input type="date" id="trx-date" class="w-full px-4 py-2 bg-slate-50 border rounded-lg" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Transaction Type</label>
+                                <select id="trx-type" class="w-full px-4 py-2 bg-slate-50 border rounded-lg font-bold" required>
+                                    <option value="IN">Receive (Debit / Cash In)</option>
+                                    <option value="OUT">Payment (Credit / Cash Out)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Select Party / Ledger</label>
+                                <input type="text" id="trx-party" placeholder="e.g. ABC Trading" class="w-full px-4 py-2 bg-slate-50 border rounded-lg" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h3 class="font-bold text-slate-700 border-b pb-2 mb-4">Item Details</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">Description</label>
+                                    <input type="text" id="trx-desc" placeholder="Service or Goods description" class="w-full px-4 py-2 bg-white border rounded-lg" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">Quantity</label>
+                                    <input type="number" id="trx-qty" value="1" min="1" class="w-full px-4 py-2 bg-white border rounded-lg text-center" oninput="calcTotal()">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">Rate (৳)</label>
+                                    <input type="number" id="trx-rate" placeholder="0.00" class="w-full px-4 py-2 bg-white border rounded-lg text-right" required oninput="calcTotal()">
+                                </div>
+                            </div>
+                            <div class="mt-4 text-right">
+                                <span class="text-sm font-bold text-slate-600">Calculated Amount: </span>
+                                <span class="text-lg font-bold text-indigo-600" id="trx-total-preview">৳ 0</span>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="w-full py-3 bg-slate-800 text-white font-bold rounded-xl shadow-lg hover:bg-slate-900 transition">Save to Local Ledger 💾</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- VIEW: MAIN LEDGER DATA -->
+            <div id="view-ledger-data" class="max-w-6xl mx-auto hidden space-y-4 pb-24">
+                <button onclick="switchView('view-dashboard')" class="text-sm font-bold text-slate-500 hover:text-indigo-600 transition flex items-center gap-2 mb-2">⬅️ Back to Dashboard</button>
+                
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="bg-slate-800 text-white">
+                            <tr>
+                                <th class="p-3">Date & Inv</th>
+                                <th class="p-3">Party</th>
+                                <th class="p-3">Description</th>
+                                <th class="p-3 text-right">Debit (In)</th>
+                                <th class="p-3 text-right">Credit (Out)</th>
+                                <th class="p-3 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledger-table-body">
+                            <!-- Populated dynamically from localStorage -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VIEW: SETTINGS -->
+            <div id="view-settings" class="max-w-4xl mx-auto hidden space-y-6">
+                <button onclick="switchView('view-dashboard')" class="text-sm font-bold text-slate-500 hover:text-indigo-600 transition flex items-center gap-2 mb-4">⬅️ Back to Dashboard</button>
+                <div class="bg-white p-8 rounded-2xl shadow-sm border">
+                    <h3 class="font-bold text-slate-700 border-b pb-2 mb-4">Data Management</h3>
+                    <p class="text-sm text-slate-500 mb-4">Your records are securely stored inside your browser/desktop storage.</p>
+                    <button onclick="clearAllData()" class="px-6 py-2 bg-red-600 text-white font-bold rounded-lg shadow hover:bg-red-700">Clear All Local Data ⚠️</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- LOGIC & LOCAL-FIRST STATE -->
+    <script>
+        let transactions = JSON.parse(localStorage.getItem('erp_transactions')) || [];
+
+        window.onload = () => {
+            document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('trx-date').valueAsDate = new Date();
+            checkLicense();
+            refreshDashboard();
+        };
+
+        function checkLicense() {
+            const hasLicense = localStorage.getItem('cashledger_license');
+            if(hasLicense) {
+                document.getElementById('main-app').classList.remove('hidden');
+            } else {
+                document.getElementById('view-license').classList.remove('hidden');
+            }
+        }
+
+        function startTrial() {
+            localStorage.setItem('cashledger_license', 'TRIAL-ACTIVE');
+            alert('Trial Mode Enabled!');
+            location.reload();
+        }
+
+        function activateLicense() {
+            const key = document.getElementById('license-key-input').value;
+            if(key.trim().length > 3) {
+                localStorage.setItem('cashledger_license', key);
+                alert('License Activated Successfully!');
+                location.reload();
+            } else {
+                alert('Please enter a valid key.');
+            }
+        }
+
+        function lockSystem() {
+            localStorage.removeItem('cashledger_license');
+            location.reload();
+        }
+
+        function switchView(viewId) {
+            const views = ['view-dashboard', 'view-transaction', 'view-ledger-data', 'view-settings'];
+            views.forEach(v => document.getElementById(v).classList.add('hidden'));
+            document.getElementById(viewId).classList.remove('hidden');
+            if(viewId === 'view-ledger-data') renderLedger();
+        }
+
+        function calcTotal() {
+            const qty = Number(document.getElementById('trx-qty').value) || 0;
+            const rate = Number(document.getElementById('trx-rate').value) || 0;
+            document.getElementById('trx-total-preview').innerText = '৳ ' + (qty * rate).toLocaleString();
+        }
+
+        function saveTransaction(e) {
+            e.preventDefault();
+            const date = document.getElementById('trx-date').value;
+            const type = document.getElementById('trx-type').value;
+            const party = document.getElementById('trx-party').value;
+            const desc = document.getElementById('trx-desc').value;
+            const qty = Number(document.getElementById('trx-qty').value);
+            const rate = Number(document.getElementById('trx-rate').value);
+            const total = qty * rate;
+
+            const newTrx = {
+                id: 'INV-' + (Math.floor(1000 + Math.random() * 9000)),
+                date,
+                party,
+                desc: `${desc} (Qty: ${qty} × ৳${rate})`,
+                amount: total,
+                type, // 'IN' or 'OUT'
+                syncStatus: 'Local'
+            };
+
+            transactions.unshift(newTrx);
+            localStorage.setItem('erp_transactions', JSON.stringify(transactions));
+
+            alert('✅ Transaction saved to Local Storage!');
+            document.getElementById('trx-form').reset();
+            document.getElementById('trx-date').valueAsDate = new Date();
+            calcTotal();
+            refreshDashboard();
+            switchView('view-ledger-data');
+        }
+
+        function renderLedger() {
+            const tbody = document.getElementById('ledger-table-body');
+            tbody.innerHTML = '';
+
+            if (transactions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center p-6 text-slate-400">No transactions recorded yet.</td></tr>`;
+                return;
+            }
+
+            transactions.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b hover:bg-slate-50';
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-slate-800">${t.date}<br><span class="text-xs text-indigo-600">${t.id}</span></td>
+                    <td class="p-3 font-bold text-slate-700">${t.party}</td>
+                    <td class="p-3">${t.desc}</td>
+                    <td class="p-3 text-right font-bold text-emerald-600">${t.type === 'IN' ? '৳ ' + t.amount.toLocaleString() : '-'}</td>
+                    <td class="p-3 text-right font-bold text-red-500">${t.type === 'OUT' ? '৳ ' + t.amount.toLocaleString() : '-'}</td>
+                    <td class="p-3 text-center"><span class="text-xs font-bold px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">💾 ${t.syncStatus}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function refreshDashboard() {
+            let totalIn = 0;
+            let totalOut = 0;
+            transactions.forEach(t => {
+                if (t.type === 'IN') totalIn += t.amount;
+                if (t.type === 'OUT') totalOut += t.amount;
+            });
+            document.getElementById('dash-total-in').innerText = '৳ ' + totalIn.toLocaleString();
+            document.getElementById('dash-total-out').innerText = '৳ ' + totalOut.toLocaleString();
+        }
+
+        function backupLocalData() {
+            const blob = new Blob([JSON.stringify(transactions, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cashERP_backup_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+        }
+
+        function syncToCloud() {
+            alert('☁️ Cloud Sync: Internet connectivity established.\nThis API will push ' + transactions.length + ' entries to the PostgreSQL/Firebase database.');
+        }
+
+        function clearAllData() {
+            if(confirm('Are you sure you want to reset all records?')) {
+                localStorage.removeItem('erp_transactions');
+                transactions = [];
+                refreshDashboard();
+                renderLedger();
+            }
+        }
+    </script>
+</body>
+</html>
