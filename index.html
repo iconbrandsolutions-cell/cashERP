@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CashLedger ERP - Local & Cloud Ready</title>
+    <title>CashLedger Ultimate ERP</title>
     <!-- Tailwind CSS for UI -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -16,15 +16,19 @@
             #printable-statement, #printable-statement * { visibility: visible; }
             #printable-statement { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
             .no-print { display: none !important; }
+            /* Force page break behavior */
             @page { margin: 10mm; }
         }
         
-        .print-canvas { min-height: 148mm; display: flex; flex-direction: column; }
+        /* A4/A5 simulation on screen */
+        .print-canvas { min-height: 148mm; /* Half A4 default */ display: flex; flex-direction: column; }
     </style>
 </head>
 <body class="text-slate-800 h-screen flex flex-col overflow-hidden">
 
+    <!-- ========================================== -->
     <!-- MODULE 1: LICENSE & ACTIVATION SCREEN -->
+    <!-- ========================================== -->
     <div id="view-license" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center hidden">
         <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
             <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-3xl mb-4">🏢</div>
@@ -45,7 +49,9 @@
         </div>
     </div>
 
-    <!-- MAIN APP WRAPPER -->
+    <!-- ========================================== -->
+    <!-- MAIN APP WRAPPER (Hidden until Activated) -->
+    <!-- ========================================== -->
     <div id="main-app" class="flex-1 flex flex-col hidden h-full">
         
         <!-- GLOBAL HEADER -->
@@ -53,28 +59,35 @@
             <div class="flex items-center gap-3">
                 <div id="hdr-logo" class="text-3xl bg-white/10 p-2 rounded-lg">🏢</div>
                 <div>
-                    <h1 id="hdr-company-name" class="text-xl font-bold tracking-wide">ICON BRAND SOLUTIONS</h1>
-                    <p id="hdr-license-info" class="text-xs text-emerald-400">License: Active (Local Storage)</p>
+                    <h1 id="hdr-company-name" class="text-xl font-bold tracking-wide">YOUR COMPANY LTD.</h1>
+                    <p id="hdr-license-info" class="text-xs text-emerald-400">License: Active (Lifetime)</p>
                 </div>
             </div>
             <div class="flex items-center gap-6">
                 <div class="flex items-center gap-4 border-r border-slate-700 pr-6">
-                    <button onclick="syncToCloud()" class="text-slate-300 hover:text-white transition text-sm flex items-center gap-1" title="Cloud Sync">☁️ <span id="sync-status-txt">Offline Mode</span></button>
-                    <button onclick="backupLocalData()" class="text-slate-300 hover:text-white transition text-sm flex items-center gap-1" title="Export Local Backup">💾 Backup</button>
+                    <button class="text-slate-300 hover:text-white transition text-sm flex items-center gap-1" title="Cloud Sync">☁️ Sync</button>
+                    <button class="text-slate-300 hover:text-white transition text-sm flex items-center gap-1" title="Local Backup">💾 Backup</button>
+                    <div class="relative cursor-pointer hover:text-indigo-300 transition">
+                        <span class="text-2xl">🔔</span>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-pulse">2</span>
+                    </div>
                 </div>
                 <div class="text-right">
-                    <p class="text-sm font-bold" id="logged-user-name">Md. Ziarul Islam</p>
-                    <p class="text-xs text-emerald-400" id="logged-user-role">Administrator</p>
+                    <p class="text-sm font-bold" id="logged-user-name">Karim Ahmed</p>
+                    <p class="text-xs text-emerald-400" id="logged-user-role">Head of Accounts</p>
                 </div>
-                <button onclick="lockSystem()" class="px-3 py-1 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded transition text-sm">Lock</button>
+                <button onclick="location.reload()" class="px-3 py-1 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded transition text-sm">Lock</button>
             </div>
         </header>
 
         <!-- MAIN SCROLLABLE CONTENT AREA -->
         <main class="flex-1 overflow-y-auto p-6 bg-slate-50 relative">
             
+            <!-- ========================================== -->
             <!-- VIEW: DASHBOARD -->
+            <!-- ========================================== -->
             <div id="view-dashboard" class="max-w-6xl mx-auto space-y-6 transition-all duration-300">
+                <!-- Top Summary Widget -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center">
                     <div>
                         <h2 class="text-lg font-bold text-slate-500">Financial Overview</h2>
@@ -83,137 +96,348 @@
                     <div class="flex gap-8">
                         <div class="text-right">
                             <p class="text-xs font-bold text-emerald-600 uppercase">Total Received (In)</p>
-                            <p class="text-2xl font-bold text-slate-800" id="dash-total-in">৳ 0</p>
+                            <p class="text-2xl font-bold text-slate-800">৳ 1,25,000</p>
                         </div>
                         <div class="text-right">
                             <p class="text-xs font-bold text-red-500 uppercase">Total Payment (Out)</p>
-                            <p class="text-2xl font-bold text-slate-800" id="dash-total-out">৳ 0</p>
+                            <p class="text-2xl font-bold text-slate-800">৳ 45,000</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Main Action Cards -->
+                <!-- Main Action Cards Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div onclick="switchView('view-transaction')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-indigo-400 hover:shadow-md cursor-pointer transition group">
+                    <!-- 1. Create Transaction -->
+                    <div onclick="switchView('view-transaction')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-indigo-400 hover:shadow-md cursor-pointer transition group relative">
+                        <div class="absolute top-2 right-2 text-slate-300">📌</div>
                         <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">➕</div>
                         <h3 class="text-lg font-bold text-slate-800">New Transaction</h3>
-                        <p class="text-xs text-slate-500 mt-1">Multi-row Invoice & Cash Entry</p>
+                        <p class="text-xs text-slate-500 mt-1">Multi-row Invoice & Bank Entry</p>
                     </div>
 
-                    <div onclick="switchView('view-ledger-data')" class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-2xl shadow-lg border border-slate-700 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition group">
+                    <!-- 2. Ledger Book -->
+                    <div onclick="switchView('view-ledger-select')" class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-2xl shadow-lg border border-slate-700 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition group relative overflow-hidden">
                         <div class="w-12 h-12 bg-slate-700 text-white rounded-xl flex items-center justify-center text-2xl mb-4 group-hover:rotate-6 transition">📒</div>
-                        <h3 class="text-lg font-bold text-white">Central Ledger</h3>
-                        <p class="text-xs text-slate-300 mt-1">View entries, filter & statements</p>
+                        <h3 class="text-lg font-bold text-white">Ledger Books</h3>
+                        <p class="text-xs text-slate-300 mt-1">Central, Party & Search Engine</p>
                     </div>
 
+                    <!-- 3. HR & Staff -->
+                    <div onclick="switchView('view-hr')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-blue-400 hover:shadow-md cursor-pointer transition group">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">👥</div>
+                        <h3 class="text-lg font-bold text-slate-800">HR & Staff</h3>
+                        <p class="text-xs text-slate-500 mt-1">Salary & Personal Files</p>
+                    </div>
+
+                    <!-- 4. Company Settings & Admin -->
                     <div onclick="switchView('view-settings')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-orange-400 hover:shadow-md cursor-pointer transition group">
                         <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">⚙️</div>
                         <h3 class="text-lg font-bold text-slate-800">Settings & Admin</h3>
-                        <p class="text-xs text-slate-500 mt-1">Branding & Local Storage Reset</p>
+                        <p class="text-xs text-slate-500 mt-1">Branding, Bank & User Roles</p>
                     </div>
                 </div>
             </div>
 
-            <!-- VIEW: NEW TRANSACTION FORM -->
+            <!-- ========================================== -->
+            <!-- VIEW: SMART TRANSACTION FORM -->
+            <!-- ========================================== -->
             <div id="view-transaction" class="max-w-4xl mx-auto hidden transition-all duration-300">
                 <button onclick="switchView('view-dashboard')" class="text-sm font-bold text-slate-500 hover:text-indigo-600 transition flex items-center gap-2 mb-4">⬅️ Back to Dashboard</button>
                 
                 <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
                     <h2 class="text-2xl font-bold text-slate-800 border-b pb-2 mb-6">Create New Transaction</h2>
                     
-                    <form id="trx-form" onsubmit="saveTransaction(event)">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <form onsubmit="event.preventDefault(); alert('Transaction Saved to Ledger!'); switchView('view-dashboard');">
+                        <!-- Basic Info -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Date</label>
-                                <input type="date" id="trx-date" class="w-full px-4 py-2 bg-slate-50 border rounded-lg" required>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Transaction Type</label>
-                                <select id="trx-type" class="w-full px-4 py-2 bg-slate-50 border rounded-lg font-bold" required>
-                                    <option value="IN">Receive (Debit / Cash In)</option>
-                                    <option value="OUT">Payment (Credit / Cash Out)</option>
-                                </select>
+                                <input type="date" class="w-full px-4 py-2 bg-slate-50 border rounded-lg" required>
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Select Party / Ledger</label>
-                                <input type="text" id="trx-party" placeholder="e.g. ABC Trading" class="w-full px-4 py-2 bg-slate-50 border rounded-lg" required>
+                                <select class="w-full px-4 py-2 bg-slate-50 border rounded-lg" required>
+                                    <option value="">-- Choose Party --</option>
+                                    <option value="CENTRAL">Main Central Cash</option>
+                                    <option value="ABC_TRADING">ABC Trading Ltd.</option>
+                                </select>
                             </div>
                         </div>
 
-                        <div class="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <h3 class="font-bold text-slate-700 border-b pb-2 mb-4">Item Details</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div class="md:col-span-2">
-                                    <label class="block text-xs font-bold text-slate-500 mb-1">Description</label>
-                                    <input type="text" id="trx-desc" placeholder="Service or Goods description" class="w-full px-4 py-2 bg-white border rounded-lg" required>
-                                </div>
+                        <!-- Dynamic Bank Logic -->
+                        <div class="bg-indigo-50 p-6 rounded-xl border border-indigo-100 mb-6">
+                            <h3 class="font-bold text-indigo-900 mb-4">Payment Method</h3>
+                            <select id="payment-method" onchange="toggleBankLogic()" class="w-full px-4 py-2 bg-white border border-indigo-200 rounded-lg font-bold mb-4">
+                                <option value="CASH">💵 Cash</option>
+                                <option value="BANK_TRANSFER">🏦 Bank Transfer</option>
+                                <option value="CHEQUE">📝 Cheque</option>
+                                <option value="DUE">⏳ Due / Credit</option>
+                            </select>
+
+                            <div id="bank-selection-area" class="hidden space-y-4 pt-2 border-t border-indigo-200">
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-500 mb-1">Quantity</label>
-                                    <input type="number" id="trx-qty" value="1" min="1" class="w-full px-4 py-2 bg-white border rounded-lg text-center" oninput="calcTotal()">
+                                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Select Bank Account</label>
+                                    <select id="saved-banks" onchange="checkCustomBank()" class="w-full px-4 py-2 bg-white border rounded-lg text-slate-700">
+                                        <option value="">-- Select Saved Bank --</option>
+                                        <option value="CITY_BANK_123">City Bank PLC (Acc: ****1234)</option>
+                                        <option disabled>─────────────────────────</option>
+                                        <option value="CUSTOM" class="font-bold text-indigo-600">➕ Enter New / Third-Party Bank Details</option>
+                                    </select>
                                 </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-500 mb-1">Rate (৳)</label>
-                                    <input type="number" id="trx-rate" placeholder="0.00" class="w-full px-4 py-2 bg-white border rounded-lg text-right" required oninput="calcTotal()">
+                                <div id="custom-bank-area" class="hidden grid-cols-2 gap-4 bg-white p-4 rounded-lg border shadow-inner">
+                                    <div><label class="block text-xs font-bold text-slate-500 mb-1">Bank Name</label><input type="text" placeholder="Bank Name" class="w-full px-3 py-2 bg-slate-50 border rounded-lg"></div>
+                                    <div><label class="block text-xs font-bold text-slate-500 mb-1">Acc/Cheque No.</label><input type="text" placeholder="Number" class="w-full px-3 py-2 bg-slate-50 border rounded-lg"></div>
+                                </div>
+                                <div id="cheque-date-area" class="hidden">
+                                    <label class="block text-xs font-bold text-orange-600 uppercase mb-1">Expected Clearing Date</label>
+                                    <input type="date" class="w-full px-4 py-2 bg-orange-50 border border-orange-200 rounded-lg">
                                 </div>
                             </div>
-                            <div class="mt-4 text-right">
-                                <span class="text-sm font-bold text-slate-600">Calculated Amount: </span>
-                                <span class="text-lg font-bold text-indigo-600" id="trx-total-preview">৳ 0</span>
+                        </div>
+
+                        <!-- Multi-row Items -->
+                        <div class="mb-6">
+                            <h3 class="font-bold text-slate-700 border-b pb-2 mb-4">Invoice Items</h3>
+                            <div class="flex gap-2 mb-2 items-center">
+                                <input type="text" placeholder="Description (e.g. Service)" class="flex-1 px-4 py-2 bg-slate-50 border rounded-lg">
+                                <input type="number" placeholder="Qty" class="w-20 px-4 py-2 bg-slate-50 border rounded-lg text-center">
+                                <input type="number" placeholder="Rate" class="w-32 px-4 py-2 bg-slate-50 border rounded-lg text-right">
+                                <button type="button" class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg font-bold">➕</button>
                             </div>
                         </div>
                         
-                        <button type="submit" class="w-full py-3 bg-slate-800 text-white font-bold rounded-xl shadow-lg hover:bg-slate-900 transition">Save to Local Ledger 💾</button>
+                        <button type="submit" class="w-full py-3 bg-slate-800 text-white font-bold rounded-xl shadow-lg hover:bg-slate-900 transition">Save Transaction 💾</button>
                     </form>
                 </div>
             </div>
 
-            <!-- VIEW: MAIN LEDGER DATA -->
+            <!-- ========================================== -->
+            <!-- VIEW: LEDGER SELECTION & PARTY LIST -->
+            <!-- ========================================== -->
+            <div id="view-ledger-select" class="max-w-4xl mx-auto hidden space-y-6">
+                <button onclick="switchView('view-dashboard')" class="text-sm font-bold text-slate-500 hover:text-indigo-600 transition flex items-center gap-2 mb-4">⬅️ Back to Dashboard</button>
+                <h2 class="text-2xl font-bold text-slate-800 mb-4">Select Ledger Book</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div onclick="switchView('view-ledger-data')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-indigo-400 cursor-pointer">
+                        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-2xl mb-4">🏢</div>
+                        <h3 class="text-xl font-bold text-slate-800">Company Central Ledger</h3>
+                        <p class="text-sm text-slate-500">View all cash, bank and master transactions.</p>
+                    </div>
+                    <div onclick="switchView('view-party-list')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-400 cursor-pointer">
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl mb-4">👥</div>
+                        <h3 class="text-xl font-bold text-slate-800">Party / Supplier Ledger</h3>
+                        <p class="text-sm text-slate-500">Search and view specific party statements.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Party List Scrollable -->
+            <div id="view-party-list" class="max-w-3xl mx-auto hidden space-y-6">
+                <button onclick="switchView('view-ledger-select')" class="text-sm font-bold text-slate-500 transition flex items-center gap-2">⬅️ Back</button>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                    <input type="text" placeholder="🔍 Search party name..." class="w-full px-4 py-3 bg-slate-50 border rounded-lg text-lg mb-4 focus:ring-2 focus:ring-emerald-500">
+                    <div class="max-h-[60vh] overflow-y-auto pr-2">
+                        <div onclick="switchView('view-ledger-data')" class="p-4 border-b hover:bg-emerald-50 cursor-pointer flex justify-between items-center group rounded-lg">
+                            <div><h4 class="font-bold text-slate-800 text-lg">ABC Trading Ltd.</h4><p class="text-xs text-slate-500">Balance: ৳ 50,000 (Dr)</p></div>
+                            <span class="text-slate-300 group-hover:text-emerald-500">➡️</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- VIEW: MAIN LEDGER DATA & SEARCH ENGINE -->
+            <!-- ========================================== -->
             <div id="view-ledger-data" class="max-w-6xl mx-auto hidden space-y-4 pb-24">
-                <button onclick="switchView('view-dashboard')" class="text-sm font-bold text-slate-500 hover:text-indigo-600 transition flex items-center gap-2 mb-2">⬅️ Back to Dashboard</button>
+                <button onclick="switchView('view-ledger-select')" class="text-sm font-bold text-slate-500 hover:text-indigo-600 transition flex items-center gap-2 mb-2">⬅️ Ledger Menu</button>
                 
+                <!-- Advanced Filter Bar -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 items-end mb-4">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Keyword Search</label>
+                        <input type="text" placeholder="Invoice, Check No..." class="w-full px-3 py-2 bg-slate-50 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">From</label><input type="date" class="px-3 py-2 bg-slate-50 border rounded-lg"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">To</label><input type="date" class="px-3 py-2 bg-slate-50 border rounded-lg"></div>
+                    <button class="px-6 py-2 bg-slate-800 text-white font-bold rounded-lg hover:bg-slate-900">🔍 Search</button>
+                </div>
+
+                <!-- Ledger Table with Select Checkboxes -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <table class="w-full text-left border-collapse text-sm">
                         <thead class="bg-slate-800 text-white">
                             <tr>
+                                <th class="p-3 w-10 text-center"></th>
                                 <th class="p-3">Date & Inv</th>
-                                <th class="p-3">Party</th>
                                 <th class="p-3">Description</th>
                                 <th class="p-3 text-right">Debit (In)</th>
                                 <th class="p-3 text-right">Credit (Out)</th>
-                                <th class="p-3 text-center">Status</th>
+                                <th class="p-3 text-center">Action</th>
                             </tr>
                         </thead>
-                        <tbody id="ledger-table-body">
-                            <!-- Populated dynamically from localStorage -->
+                        <tbody>
+                            <!-- Item 1 (Approved Locked) -->
+                            <tr class="border-b hover:bg-slate-50 group">
+                                <td class="p-3 text-center"><input type="checkbox" onchange="toggleCartItem(this, 'INV-001')" class="w-4 h-4 accent-indigo-600 cursor-pointer"></td>
+                                <td class="p-3 font-bold text-slate-800">14 Sep 2026<br><span class="text-xs text-indigo-600">INV-001</span></td>
+                                <td class="p-3">Software Sales<br><span class="text-xs text-slate-500 font-bold">Qty: 1 × Rate: 50,000</span></td>
+                                <td class="p-3 text-right font-bold text-emerald-600">50,000</td>
+                                <td class="p-3 text-right text-slate-400">-</td>
+                                <td class="p-3 text-center">
+                                    <span class="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-1 rounded shadow-sm">✅ 🔒</span>
+                                </td>
+                            </tr>
+                            <!-- Item 2 (Pending Editable) -->
+                            <tr class="border-b hover:bg-slate-50 group">
+                                <td class="p-3 text-center"><input type="checkbox" onchange="toggleCartItem(this, 'INV-002')" class="w-4 h-4 accent-indigo-600 cursor-pointer"></td>
+                                <td class="p-3 font-bold text-slate-800">15 Sep 2026<br><span class="text-xs text-indigo-600">INV-002</span></td>
+                                <td class="p-3">Server Maintenance<br><span class="text-xs text-slate-500 font-bold">Qty: 2 × Rate: 5,000</span></td>
+                                <td class="p-3 text-right text-slate-400">-</td>
+                                <td class="p-3 text-right font-bold text-red-500">10,000</td>
+                                <td class="p-3 text-center">
+                                    <div class="flex gap-1 justify-center opacity-0 group-hover:opacity-100 transition">
+                                        <button class="bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-200">✏️</button>
+                                        <button class="bg-red-100 text-red-600 px-2 py-1 rounded hover:bg-red-200">🗑️</button>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- VIEW: SETTINGS -->
+            <!-- ========================================== -->
+            <!-- VIEW: SETTINGS & HR (Combined for brevity) -->
+            <!-- ========================================== -->
             <div id="view-settings" class="max-w-4xl mx-auto hidden space-y-6">
                 <button onclick="switchView('view-dashboard')" class="text-sm font-bold text-slate-500 hover:text-indigo-600 transition flex items-center gap-2 mb-4">⬅️ Back to Dashboard</button>
+                <h2 class="text-2xl font-bold text-slate-800">Settings & Admin</h2>
                 <div class="bg-white p-8 rounded-2xl shadow-sm border">
-                    <h3 class="font-bold text-slate-700 border-b pb-2 mb-4">Data Management</h3>
-                    <p class="text-sm text-slate-500 mb-4">Your records are securely stored inside your browser/desktop storage.</p>
-                    <button onclick="clearAllData()" class="px-6 py-2 bg-red-600 text-white font-bold rounded-lg shadow hover:bg-red-700">Clear All Local Data ⚠️</button>
+                    <h3 class="font-bold text-slate-700 border-b pb-2 mb-4">White-label Branding</h3>
+                    <input type="text" placeholder="Company Name" class="w-full px-4 py-2 border rounded-lg mb-3 focus:ring-2 focus:ring-indigo-500">
+                    <textarea placeholder="Address" class="w-full px-4 py-2 border rounded-lg mb-3" rows="2"></textarea>
+                    <button class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg shadow hover:bg-indigo-700">Save Branding 💾</button>
+                </div>
+            </div>
+
+            <div id="view-hr" class="max-w-4xl mx-auto hidden space-y-6">
+                <button onclick="switchView('view-dashboard')" class="text-sm font-bold text-slate-500 hover:text-indigo-600 transition flex items-center gap-2 mb-4">⬅️ Back to Dashboard</button>
+                <h2 class="text-2xl font-bold text-slate-800">HR & Staff Files</h2>
+                <div class="bg-white p-8 rounded-2xl shadow-sm border flex flex-col">
+                    <h3 class="font-bold text-slate-700 border-b pb-2 mb-4">Md. Rahim (EX-205)</h3>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Internal Notes & History (Promotions, Activities)</label>
+                    <textarea class="w-full h-32 px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm" placeholder="Promoted to Sr. Exec..."></textarea>
+                    <div class="mt-4 text-right"><button class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg shadow hover:bg-blue-700">Save File Notes</button></div>
                 </div>
             </div>
 
         </main>
+
+        <!-- ========================================== -->
+        <!-- FLOATING CART BAR (Selected Transactions) -->
+        <!-- ========================================== -->
+        <div id="cart-bar" class="absolute bottom-0 left-0 w-full bg-slate-900 text-white p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.3)] transform translate-y-full transition-transform duration-300 flex justify-between items-center z-40">
+            <div>
+                <span class="font-bold text-lg"><span id="cart-count" class="text-emerald-400 text-2xl">0</span> Items Selected</span>
+                <p class="text-xs text-slate-400">Ready for custom statement print/share.</p>
+            </div>
+            <button onclick="openPrintModal()" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-lg flex items-center gap-2">
+                Generate Statement ➡️
+            </button>
+        </div>
     </div>
 
-    <!-- LOGIC & LOCAL-FIRST STATE -->
+    <!-- ========================================== -->
+    <!-- MODAL: PRINT / SHARE STATEMENT (A4/A5 Scaling) -->
+    <!-- ========================================== -->
+    <div id="modal-print" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 no-print">
+        <div class="bg-white w-full max-w-4xl max-h-[95vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            
+            <div class="p-4 bg-slate-100 border-b flex justify-between items-center">
+                <h2 class="font-bold text-slate-800">Statement Preview (Auto A4/A5)</h2>
+                <button onclick="closePrintModal()" class="text-slate-500 hover:text-red-500 font-bold text-xl">✕</button>
+            </div>
+
+            <!-- PRINTABLE AREA -->
+            <div id="printable-statement" class="p-8 flex-1 overflow-y-auto bg-white print-canvas justify-between relative">
+                
+                <div>
+                    <!-- Dynamic Header -->
+                    <div class="text-center border-b-2 border-slate-800 pb-4 mb-6">
+                        <h1 class="text-3xl font-bold text-slate-900">YOUR COMPANY LTD.</h1>
+                        <p class="text-sm text-slate-600">Custom Transaction Statement</p>
+                    </div>
+
+                    <!-- Selected Data Table -->
+                    <table class="w-full text-left border-collapse text-sm mb-8">
+                        <tr class="bg-slate-100 border-y border-slate-300">
+                            <th class="p-2 font-bold">Date & Inv</th>
+                            <th class="p-2 font-bold">Description</th>
+                            <th class="p-2 font-bold text-right">Debit (In)</th>
+                            <th class="p-2 font-bold text-right">Credit (Out)</th>
+                        </tr>
+                        <tr class="border-b border-slate-100">
+                            <td class="p-2">14 Sep 2026<br><span class="text-xs text-indigo-600">INV-001</span></td>
+                            <td class="p-2">Software Sales<br><span class="text-xs text-slate-500">Qty: 1 × Rate: 50,000</span></td>
+                            <td class="p-2 text-right font-bold text-emerald-600">50,000</td>
+                            <td class="p-2 text-right text-slate-400">-</td>
+                        </tr>
+                        <tr class="bg-slate-50 font-bold">
+                            <td colspan="2" class="p-3 text-right text-slate-700">Grand Total:</td>
+                            <td class="p-3 text-right text-indigo-600">৳ 50,000</td>
+                            <td class="p-3 text-right">-</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Auto Signatory System (Always pushes to bottom of print canvas) -->
+                <div class="pt-8 grid grid-cols-3 gap-8 text-center text-sm mt-auto">
+                    <div class="flex flex-col items-center">
+                        <div class="w-full border-t border-slate-400 mb-2"></div>
+                        <span class="font-bold text-slate-700">Prepared By</span>
+                        <span class="text-xs text-indigo-700 font-semibold" id="sig-prep"></span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-full border-t border-slate-400 mb-2"></div>
+                        <span class="font-bold text-slate-700">Received By</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-full border-t border-slate-400 mb-2"></div>
+                        <span class="font-bold text-slate-700 flex items-center justify-center gap-1">
+                            Approved By <span id="sig-lock" class="hidden text-emerald-500">✅</span>
+                        </span>
+                        <span class="text-xs text-emerald-700 font-semibold h-4" id="sig-appr"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Footer -->
+            <div class="p-4 bg-slate-50 border-t flex justify-between items-center">
+                <label class="text-xs flex items-center gap-1 cursor-pointer font-bold text-slate-500">
+                    <input type="checkbox" id="sim-approved" class="accent-emerald-600" checked> Simulate Approved Status
+                </label>
+                <div class="flex gap-3">
+                    <button onclick="actionPrint()" class="px-6 py-2 bg-indigo-100 text-indigo-700 font-bold rounded-lg hover:bg-indigo-200">🖨️ Print</button>
+                    <button onclick="actionShare()" class="px-6 py-2 bg-emerald-600 text-white font-bold rounded-lg shadow-md hover:bg-emerald-700">💬 Share</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- LOGIC & STATE MANAGEMENT -->
+    <!-- ========================================== -->
     <script>
-        let transactions = JSON.parse(localStorage.getItem('erp_transactions')) || [];
+        // --- System State ---
+        let selectedCart = new Set();
+        const loggedUser = { name: "Karim Ahmed", id: "HOA-01", role: "Head of Accounts" };
 
         window.onload = () => {
             document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            document.getElementById('trx-date').valueAsDate = new Date();
             checkLicense();
-            refreshDashboard();
         };
 
+        // --- License & SaaS Logic ---
         function checkLicense() {
             const hasLicense = localStorage.getItem('cashledger_license');
             if(hasLicense) {
@@ -222,128 +446,94 @@
                 document.getElementById('view-license').classList.remove('hidden');
             }
         }
-
         function startTrial() {
-            localStorage.setItem('cashledger_license', 'TRIAL-ACTIVE');
-            alert('Trial Mode Enabled!');
+            localStorage.setItem('cashledger_license', 'TRIAL-7DAYS');
+            alert('7-Day Trial Activated! Welcome to CashLedger ERP.');
             location.reload();
         }
-
         function activateLicense() {
             const key = document.getElementById('license-key-input').value;
-            if(key.trim().length > 3) {
+            if(key.length > 5) {
                 localStorage.setItem('cashledger_license', key);
-                alert('License Activated Successfully!');
+                alert(`License Accepted: ${key}\nSoftware is now activated.`);
                 location.reload();
-            } else {
-                alert('Please enter a valid key.');
-            }
+            } else { alert("Invalid Activation Key!"); }
         }
 
-        function lockSystem() {
-            localStorage.removeItem('cashledger_license');
-            location.reload();
-        }
-
+        // --- SPA Routing ---
         function switchView(viewId) {
-            const views = ['view-dashboard', 'view-transaction', 'view-ledger-data', 'view-settings'];
+            const views = ['view-dashboard', 'view-transaction', 'view-ledger-select', 'view-party-list', 'view-ledger-data', 'view-settings', 'view-hr'];
             views.forEach(v => document.getElementById(v).classList.add('hidden'));
             document.getElementById(viewId).classList.remove('hidden');
-            if(viewId === 'view-ledger-data') renderLedger();
+            
+            // Handle Cart Bar visibility
+            if(viewId !== 'view-ledger-data') document.getElementById('cart-bar').classList.add('translate-y-full');
+            else if(selectedCart.size > 0) document.getElementById('cart-bar').classList.remove('translate-y-full');
         }
 
-        function calcTotal() {
-            const qty = Number(document.getElementById('trx-qty').value) || 0;
-            const rate = Number(document.getElementById('trx-rate').value) || 0;
-            document.getElementById('trx-total-preview').innerText = '৳ ' + (qty * rate).toLocaleString();
+        // --- Dynamic Bank Form Logic ---
+        function toggleBankLogic() {
+            const method = document.getElementById('payment-method').value;
+            const bankArea = document.getElementById('bank-selection-area');
+            const chequeDateArea = document.getElementById('cheque-date-area');
+            
+            bankArea.classList.add('hidden');
+            chequeDateArea.classList.add('hidden');
+
+            if (method === 'BANK_TRANSFER' || method === 'CHEQUE') {
+                bankArea.classList.remove('hidden');
+                if (method === 'CHEQUE') chequeDateArea.classList.remove('hidden');
+            }
+        }
+        function checkCustomBank() {
+            const selectedBank = document.getElementById('saved-banks').value;
+            const customArea = document.getElementById('custom-bank-area');
+            if (selectedBank === 'CUSTOM') {
+                customArea.classList.remove('hidden');
+                customArea.classList.add('grid');
+            } else {
+                customArea.classList.add('hidden');
+                customArea.classList.remove('grid');
+            }
         }
 
-        function saveTransaction(e) {
-            e.preventDefault();
-            const date = document.getElementById('trx-date').value;
-            const type = document.getElementById('trx-type').value;
-            const party = document.getElementById('trx-party').value;
-            const desc = document.getElementById('trx-desc').value;
-            const qty = Number(document.getElementById('trx-qty').value);
-            const rate = Number(document.getElementById('trx-rate').value);
-            const total = qty * rate;
-
-            const newTrx = {
-                id: 'INV-' + (Math.floor(1000 + Math.random() * 9000)),
-                date,
-                party,
-                desc: `${desc} (Qty: ${qty} × ৳${rate})`,
-                amount: total,
-                type, // 'IN' or 'OUT'
-                syncStatus: 'Local'
-            };
-
-            transactions.unshift(newTrx);
-            localStorage.setItem('erp_transactions', JSON.stringify(transactions));
-
-            alert('✅ Transaction saved to Local Storage!');
-            document.getElementById('trx-form').reset();
-            document.getElementById('trx-date').valueAsDate = new Date();
-            calcTotal();
-            refreshDashboard();
-            switchView('view-ledger-data');
+        // --- Ledger Cart Logic ---
+        function toggleCartItem(checkbox, id) {
+            if(checkbox.checked) selectedCart.add(id);
+            else selectedCart.delete(id);
+            
+            document.getElementById('cart-count').innerText = selectedCart.size;
+            if(selectedCart.size > 0) document.getElementById('cart-bar').classList.remove('translate-y-full');
+            else document.getElementById('cart-bar').classList.add('translate-y-full');
         }
 
-        function renderLedger() {
-            const tbody = document.getElementById('ledger-table-body');
-            tbody.innerHTML = '';
+        // --- Statement Modal & Signatory Logic ---
+        function openPrintModal() {
+            document.getElementById('modal-print').classList.remove('hidden');
+            document.getElementById('sig-prep').innerText = "";
+            document.getElementById('sig-appr').innerText = "";
+            document.getElementById('sig-lock').classList.add('hidden');
+        }
+        function closePrintModal() { document.getElementById('modal-print').classList.add('hidden'); }
 
-            if (transactions.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center p-6 text-slate-400">No transactions recorded yet.</td></tr>`;
+        function actionPrint() {
+            document.getElementById('sig-prep').innerText = `${loggedUser.name} (${loggedUser.id})`;
+            if(document.getElementById('sim-approved').checked) {
+                document.getElementById('sig-appr').innerText = "System Admin (HOA-01)";
+                document.getElementById('sig-lock').classList.remove('hidden');
+            }
+            setTimeout(() => window.print(), 100);
+        }
+
+        function actionShare() {
+            if(!document.getElementById('sim-approved').checked) {
+                alert("🔒 ACCESS DENIED: Cannot share unapproved statements.");
                 return;
             }
-
-            transactions.forEach(t => {
-                const tr = document.createElement('tr');
-                tr.className = 'border-b hover:bg-slate-50';
-                tr.innerHTML = `
-                    <td class="p-3 font-bold text-slate-800">${t.date}<br><span class="text-xs text-indigo-600">${t.id}</span></td>
-                    <td class="p-3 font-bold text-slate-700">${t.party}</td>
-                    <td class="p-3">${t.desc}</td>
-                    <td class="p-3 text-right font-bold text-emerald-600">${t.type === 'IN' ? '৳ ' + t.amount.toLocaleString() : '-'}</td>
-                    <td class="p-3 text-right font-bold text-red-500">${t.type === 'OUT' ? '৳ ' + t.amount.toLocaleString() : '-'}</td>
-                    <td class="p-3 text-center"><span class="text-xs font-bold px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">💾 ${t.syncStatus}</span></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function refreshDashboard() {
-            let totalIn = 0;
-            let totalOut = 0;
-            transactions.forEach(t => {
-                if (t.type === 'IN') totalIn += t.amount;
-                if (t.type === 'OUT') totalOut += t.amount;
-            });
-            document.getElementById('dash-total-in').innerText = '৳ ' + totalIn.toLocaleString();
-            document.getElementById('dash-total-out').innerText = '৳ ' + totalOut.toLocaleString();
-        }
-
-        function backupLocalData() {
-            const blob = new Blob([JSON.stringify(transactions, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `cashERP_backup_${new Date().toISOString().slice(0, 10)}.json`;
-            a.click();
-        }
-
-        function syncToCloud() {
-            alert('☁️ Cloud Sync: Internet connectivity established.\nThis API will push ' + transactions.length + ' entries to the PostgreSQL/Firebase database.');
-        }
-
-        function clearAllData() {
-            if(confirm('Are you sure you want to reset all records?')) {
-                localStorage.removeItem('erp_transactions');
-                transactions = [];
-                refreshDashboard();
-                renderLedger();
-            }
+            document.getElementById('sig-prep').innerText = `${loggedUser.name} (${loggedUser.id})`;
+            document.getElementById('sig-appr').innerText = "System Admin (HOA-01)";
+            document.getElementById('sig-lock').classList.remove('hidden');
+            setTimeout(() => alert("✅ Document Verified & Locked.\nGenerating High-Res Image for WhatsApp..."), 100);
         }
     </script>
 </body>
