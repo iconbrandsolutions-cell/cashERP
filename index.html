@@ -1,503 +1,127 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CashLedger Ultimate - SaaS ERP</title>
-    <!-- PWA Setup & Tailwind -->
-    <meta name="theme-color" content="#1e293b">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .hidden-view { display: none !important; }
-        
-        /* Print Specific CSS (A4/A5 Auto Scaling) */
-        @media print {
-            body * { visibility: hidden; }
-            #print-section, #print-section * { visibility: visible; }
-            #print-section { position: absolute; left: 0; top: 0; width: 100%; background: white; }
-            .no-print { display: none !important; }
-        }
-        .print-a5 { min-height: 148mm; padding: 10mm; }
-        .print-a4 { min-height: 290mm; padding: 10mm; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="Casherp: a simple cash and ledger management app.">
+  <title>Casherp | Cash & Ledger</title>
+  <style>
+    :root { --navy:#0f172a; --slate:#475569; --muted:#64748b; --line:#e2e8f0; --paper:#fff; --canvas:#f8fafc; --brand:#2563eb; --brand-dark:#1d4ed8; --green:#15803d; --red:#b91c1c; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--navy); background:var(--canvas); font:15px/1.45 Inter,system-ui,-apple-system,"Segoe UI",sans-serif; }
+    button,input,select,textarea { font:inherit; } button { cursor:pointer; }
+    .hidden { display:none!important; }
+    .app { display:flex; min-height:100vh; }
+    .sidebar { position:sticky; top:0; display:flex; flex:0 0 250px; flex-direction:column; height:100vh; color:#e2e8f0; background:var(--navy); }
+    .company { padding:25px 18px; text-align:center; border-bottom:1px solid #1e293b; }
+    .logo { display:grid; width:56px; height:56px; margin:0 auto 10px; place-items:center; overflow:hidden; color:#dbeafe; font-weight:800; font-size:25px; border-radius:14px; background:#1e3a8a; }
+    .logo img { display:none; width:100%; height:100%; object-fit:contain; background:#fff; }
+    .company h1 { margin:0; color:#93c5fd; font-size:19px; } .company small { color:#94a3b8; }
+    nav { display:grid; gap:5px; padding:17px 12px; }
+    .nav-button { width:100%; padding:11px 13px; color:#cbd5e1; text-align:left; border:0; border-radius:8px; background:transparent; transition:.16s; }
+    .nav-button:hover,.nav-button.active { color:#fff; background:var(--brand); }
+    .user { margin-top:auto; padding:18px; color:#94a3b8; font-size:12px; border-top:1px solid #1e293b; } .user b { display:block; color:#fff; font-size:14px; }
+    main { flex:1; min-width:0; padding:32px; } .page { display:none; max-width:1200px; margin:auto; } .page.active { display:block; }
+    .heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:24px; } h2 { margin:0; font-size:26px; letter-spacing:-.6px; } .sub { margin:5px 0 0; color:var(--muted); }
+    .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:17px; } .card { padding:20px; border:1px solid var(--line); border-radius:13px; background:var(--paper); box-shadow:0 3px 9px rgb(15 23 42/.035); }
+    .stat { border-top:4px solid var(--brand); } .stat.green { border-top-color:#22c55e; } .stat.purple { border-top-color:#8b5cf6; } .stat span { color:var(--muted); font-size:13px; } .stat strong { display:block; margin-top:6px; font-size:26px; letter-spacing:-.7px; }
+    .panel { padding:23px; border:1px solid var(--line); border-radius:13px; background:var(--paper); box-shadow:0 3px 9px rgb(15 23 42/.035); }
+    .button { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:39px; padding:9px 14px; color:#fff; font-weight:700; border:0; border-radius:8px; background:var(--brand); transition:.16s; } .button:hover { background:var(--brand-dark); }
+    .button.secondary { color:#334155; background:#e2e8f0; } .button.secondary:hover { background:#cbd5e1; } .button.success { background:var(--green); } .button.success:hover { background:#166534; } .button.danger { color:var(--red); background:#fee2e2; } .button.danger:hover { background:#fecaca; } .button.small { min-height:31px; padding:5px 9px; font-size:12px; }
+    .quick-actions { display:flex; flex-wrap:wrap; gap:9px; margin-top:20px; }
+    .form-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:17px; } .span-two { grid-column:span 2; } label { display:block; margin-bottom:6px; font-size:13px; font-weight:700; }
+    input:not([type=checkbox]):not([type=file]),select,textarea { width:100%; padding:10px 11px; color:var(--navy); border:1px solid #cbd5e1; border-radius:8px; outline:none; background:#fff; } input:focus,select:focus,textarea:focus { border-color:#60a5fa; box-shadow:0 0 0 3px rgb(59 130 246/.13); } textarea { min-height:92px; resize:vertical; }
+    .bank { padding:14px; border:1px solid #bfdbfe; border-radius:9px; background:#eff6ff; }
+    .items,.ledger { width:100%; border-collapse:collapse; } .items { margin:21px 0 11px; } .items th { padding:9px; color:#475569; font-size:12px; text-align:left; background:#f1f5f9; } .items td { padding:5px; border-bottom:1px solid var(--line); } .items input { min-width:68px; padding:7px; border:1px solid transparent; background:transparent; } .items input:focus { border-color:#93c5fd; background:#fff; } .line-total { padding-right:10px!important; font-weight:800; text-align:right; white-space:nowrap; } .remove { padding:5px 8px; color:#dc2626; border:0; border-radius:5px; background:transparent; } .remove:hover { background:#fee2e2; }
+    .form-footer { display:flex; align-items:center; justify-content:space-between; gap:18px; padding-top:15px; border-top:1px solid var(--line); } .total { font-size:20px; font-weight:800; } .total b { color:var(--brand); }
+    .toolbar { padding:15px; border-bottom:1px solid var(--line); background:#f8fafc; } .table-wrap { overflow-x:auto; } .ledger th { padding:12px 13px; color:#fff; font-size:12px; text-align:left; background:#1e293b; } .ledger td { padding:13px; border-bottom:1px solid var(--line); } .ledger tbody tr:hover { background:#f8fafc; } .check { width:42px; text-align:center; } .party { color:#1d4ed8; font-weight:700; } .money { font-variant-numeric:tabular-nums; font-weight:800; white-space:nowrap; } .badge { display:inline-block; padding:3px 8px; color:#166534; font-size:11px; font-weight:800; border-radius:99px; background:#dcfce7; } .empty { padding:48px 20px!important; color:var(--muted); text-align:center; }
+    .settings { display:grid; grid-template-columns:1fr 1fr; gap:20px; } .notice { padding:12px; color:#1e40af; border:1px solid #bfdbfe; border-radius:8px; background:#eff6ff; font-size:13px; }
+    .cart { position:fixed; right:0; bottom:0; left:250px; display:flex; align-items:center; justify-content:space-between; gap:15px; padding:13px 32px; color:#fff; transform:translateY(100%); background:var(--navy); box-shadow:0 -8px 25px rgb(15 23 42/.18); transition:transform .23s; } .cart.visible { transform:none; } .cart-info { display:flex; align-items:center; gap:10px; } .count { display:grid; width:32px; height:32px; place-items:center; font-weight:800; border-radius:50%; background:var(--brand); } .cart-info small,.cart-info b { display:block; } .cart-info small { color:#cbd5e1; } .cart-info b { color:#86efac; font-size:17px; } .cart-actions { display:flex; gap:8px; }
+    .toasts { position:fixed; top:17px; right:17px; z-index:20; display:grid; gap:8px; } .toast { padding:12px 15px; color:#fff; font-weight:700; border-radius:8px; background:var(--green); box-shadow:0 7px 19px rgb(15 23 42/.18); } .toast.error { background:#dc2626; }
+    #print-page { display:none; }
+    @media (max-width:800px) { .app { display:block; } .sidebar { position:relative; width:100%; height:auto; min-height:0; flex-basis:auto; } .company,.user { display:none; } nav { display:flex; overflow:auto; padding:9px; } .nav-button { width:auto; flex:0 0 auto; white-space:nowrap; } main { padding:20px 14px 93px; } .cards,.settings,.form-grid { grid-template-columns:1fr; } .span-two { grid-column:span 1; } .heading { flex-direction:column; } .cart { left:0; padding:12px 14px; } .cart .secondary { display:none; } }
+    @media print { body > * { display:none!important; } #print-page { display:block!important; color:#0f172a; background:#fff; } }
+  </style>
 </head>
-<body class="text-slate-800">
-
-    <!-- Notification Toast Container -->
-    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2"></div>
-
-    <!-- ==========================================
-         1. LICENSE & ACTIVATION SCREEN
-         ========================================== -->
-    <div id="view-license" class="min-h-screen flex items-center justify-center bg-slate-900 text-white">
-        <div class="bg-slate-800 p-8 rounded-xl shadow-2xl max-w-md w-full text-center border border-slate-700">
-            <h1 class="text-3xl font-bold text-blue-400 mb-2">🛡️ CashLedger ERP</h1>
-            <p class="text-slate-400 mb-6">SaaS License & Activation</p>
-            <div class="bg-slate-700 p-4 rounded-lg mb-6 text-2xl font-mono tracking-widest" id="trial-counter">
-                7 Days Trial
-            </div>
-            <input type="text" id="license-key" placeholder="Enter Activation Key..." class="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded mb-4 text-center text-white focus:outline-none focus:border-blue-500">
-            <div class="flex gap-2">
-                <button onclick="activateTrial()" class="flex-1 bg-slate-600 hover:bg-slate-500 py-3 rounded font-bold transition">Start Trial</button>
-                <button onclick="activateLicense()" class="flex-1 bg-blue-600 hover:bg-blue-500 py-3 rounded font-bold transition">Activate</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ==========================================
-         2. MAIN APPLICATION (DASHBOARD)
-         ========================================== -->
-    <div id="view-app" class="hidden-view h-screen flex overflow-hidden">
-        
-        <!-- Sidebar Navigation -->
-        <div class="w-64 bg-slate-900 text-white flex flex-col">
-            <div class="p-6 border-b border-slate-800 text-center">
-                <img id="sidebar-logo" src="https://via.placeholder.com/150x50?text=Logo" alt="Company Logo" class="h-12 mx-auto mb-2 object-contain bg-white p-1 rounded">
-                <h2 id="sidebar-company-name" class="font-bold text-lg text-blue-400">My Company</h2>
-            </div>
-            <div class="flex-1 p-4 flex flex-col gap-2">
-                <button onclick="switchTab('dashboard')" class="text-left px-4 py-3 rounded bg-blue-600 font-semibold hover:bg-blue-500 transition">📊 Dashboard</button>
-                <button onclick="switchTab('transaction')" class="text-left px-4 py-3 rounded hover:bg-slate-800 transition">✍️ New Transaction</button>
-                <button onclick="switchTab('ledger')" class="text-left px-4 py-3 rounded hover:bg-slate-800 transition">📒 Ledger Book</button>
-                <button onclick="switchTab('settings')" class="text-left px-4 py-3 rounded hover:bg-slate-800 transition">⚙️ Settings & HR</button>
-            </div>
-            <div class="p-4 border-t border-slate-800 text-sm text-slate-400 text-center">
-                User: <span id="current-user" class="font-bold text-white">Head of Accounts</span>
-            </div>
-        </div>
-
-        <!-- Main Content Area -->
-        <div class="flex-1 overflow-y-auto bg-slate-50 p-8 relative">
-            
-            <!-- Dashboard Tab -->
-            <div id="tab-dashboard" class="tab-content block">
-                <h2 class="text-2xl font-bold mb-6">Welcome to Dashboard</h2>
-                <div class="grid grid-cols-3 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-xl shadow border-t-4 border-blue-500">
-                        <p class="text-slate-500">Today's Date</p>
-                        <h3 class="text-xl font-bold" id="dash-date">--</h3>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow border-t-4 border-green-500">
-                        <p class="text-slate-500">Total Transactions</p>
-                        <h3 class="text-3xl font-bold text-green-600" id="dash-total-count">0</h3>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow border-t-4 border-purple-500 cursor-pointer hover:shadow-lg transition" onclick="switchTab('ledger')">
-                        <p class="text-slate-500 text-center mt-2 font-bold">Go to Ledger Book ➡️</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Transaction Form Tab -->
-            <div id="tab-transaction" class="tab-content hidden-view">
-                <h2 class="text-2xl font-bold mb-6">Create New Transaction</h2>
-                <div class="bg-white p-8 rounded-xl shadow max-w-4xl border border-slate-200">
-                    <div class="grid grid-cols-2 gap-6 mb-6">
-                        <div>
-                            <label class="block text-sm font-bold mb-2">Party / Client Name *</label>
-                            <input type="text" id="txn-party" class="w-full border p-2 rounded" placeholder="Enter party name">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold mb-2">Payment Method *</label>
-                            <select id="txn-method" class="w-full border p-2 rounded" onchange="toggleBankInput()">
-                                <option value="Cash">Cash</option>
-                                <option value="Bank">Bank / Cheque</option>
-                            </select>
-                        </div>
-                        <!-- Dynamic Bank Input -->
-                        <div id="bank-details-container" class="col-span-2 hidden-view bg-slate-50 p-4 rounded border">
-                            <label class="block text-sm font-bold mb-2 text-blue-600">Select Bank or Enter New Details</label>
-                            <select id="txn-bank-select" class="w-full border p-2 rounded mb-2" onchange="handleNewBankToggle()">
-                                <option value="Default Company Bank">Default Company Bank</option>
-                                <option value="other">➕ Enter New / Third-Party Bank Details</option>
-                            </select>
-                            <input type="text" id="txn-custom-bank" class="w-full border p-2 rounded hidden-view" placeholder="E.g., BRAC Bank - Cheque No: 123456">
-                        </div>
-                    </div>
-
-                    <!-- Multi-row Items -->
-                    <table class="w-full mb-4 border-collapse">
-                        <thead>
-                            <tr class="bg-slate-100">
-                                <th class="border p-2 text-left">Item Description</th>
-                                <th class="border p-2 w-24">Qty</th>
-                                <th class="border p-2 w-32">Rate</th>
-                                <th class="border p-2 w-32">Total</th>
-                                <th class="border p-2 w-10 text-center">X</th>
-                            </tr>
-                        </thead>
-                        <tbody id="txn-items-body">
-                            <!-- Rows inserted via JS -->
-                        </tbody>
-                    </table>
-                    
-                    <button onclick="addTxnRow()" class="bg-slate-200 hover:bg-slate-300 px-4 py-2 rounded text-sm font-bold mb-6">+ Add Item</button>
-
-                    <div class="flex justify-between items-center border-t pt-4">
-                        <h3 class="text-xl font-bold">Grand Total: <span id="txn-grand-total" class="text-blue-600">0.00</span></h3>
-                        <button onclick="saveTransaction()" class="bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded font-bold shadow">Save & Generate</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Ledger Book Tab -->
-            <div id="tab-ledger" class="tab-content hidden-view">
-                <h2 class="text-2xl font-bold mb-6">Ledger Book & Cart</h2>
-                <div class="bg-white rounded-xl shadow overflow-hidden">
-                    <div class="p-4 border-b flex gap-4 bg-slate-50">
-                        <input type="text" id="search-ledger" class="flex-1 border p-2 rounded" placeholder="Search by name, ID or amount..." onkeyup="renderLedger()">
-                    </div>
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-800 text-white">
-                                <th class="p-3 w-10 text-center">✓</th>
-                                <th class="p-3">Date</th>
-                                <th class="p-3">Party Name</th>
-                                <th class="p-3">Amount</th>
-                                <th class="p-3">Status</th>
-                                <th class="p-3 text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ledger-body">
-                            <!-- Ledger Rows injected via JS -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Floating Selection Cart -->
-                <div id="floating-cart" class="fixed bottom-0 left-64 right-0 bg-slate-900 text-white p-4 shadow-[0_-10px_15px_rgba(0,0,0,0.1)] flex justify-between items-center transition-transform transform translate-y-full">
-                    <div>
-                        <span class="bg-blue-500 text-white px-3 py-1 rounded-full font-bold mr-2" id="cart-count">0</span>
-                        <span class="font-bold">Transactions Selected</span>
-                    </div>
-                    <div class="flex gap-3">
-                        <button onclick="clearSelection()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm">Clear</button>
-                        <button onclick="processPrintShare()" class="px-6 py-2 bg-green-600 hover:bg-green-500 font-bold rounded shadow flex items-center gap-2">
-                            🖨️ Print / Share Selected
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Settings & HR Tab -->
-            <div id="tab-settings" class="tab-content hidden-view">
-                <h2 class="text-2xl font-bold mb-6">White-label & HR Settings</h2>
-                <div class="grid grid-cols-2 gap-8">
-                    <!-- Company Branding -->
-                    <div class="bg-white p-6 rounded-xl shadow border">
-                        <h3 class="font-bold text-lg mb-4 text-blue-600">Company Profile</h3>
-                        <label class="block text-sm mb-1">Company Name</label>
-                        <input type="text" id="set-comp-name" class="w-full border p-2 rounded mb-4">
-                        
-                        <label class="block text-sm mb-1">Company Address</label>
-                        <textarea id="set-comp-address" class="w-full border p-2 rounded mb-4"></textarea>
-
-                        <label class="block text-sm mb-1">Upload Logo (PNG/JPG)</label>
-                        <input type="file" id="set-logo-upload" accept="image/*" class="w-full border p-2 rounded mb-4" onchange="handleLogoUpload(event)">
-                        
-                        <button onclick="saveSettings()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">Save Settings</button>
-                    </div>
-                    <!-- HR Notes Placeholder -->
-                    <div class="bg-white p-6 rounded-xl shadow border">
-                        <h3 class="font-bold text-lg mb-4 text-purple-600">Staff HR Notes</h3>
-                        <p class="text-sm text-slate-500 mb-4">Manage executive profiles and performance histories.</p>
-                        <textarea class="w-full border p-2 rounded h-32" placeholder="Internal notes for promotion history..."></textarea>
-                        <button onclick="showToast('HR Note Saved!', 'success')" class="mt-2 bg-slate-800 text-white px-4 py-2 rounded">Save Note</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ==========================================
-         3. PRINT INVOICE TEMPLATE (A4/A5 Auto)
-         ========================================== -->
-    <div id="print-section" class="hidden-view bg-white mx-auto shadow-2xl relative border">
-        <!-- Print Header -->
-        <div class="flex justify-between items-start border-b-2 border-slate-800 pb-4 mb-4">
-            <div>
-                <img id="print-logo" src="" alt="Logo" style="max-height: 60px; display: none;">
-                <h1 id="print-comp-name" class="text-2xl font-bold uppercase mt-2">Company Name</h1>
-                <p id="print-comp-address" class="text-sm text-slate-600 whitespace-pre-line">Address here</p>
-            </div>
-            <div class="text-right">
-                <h2 class="text-3xl font-light text-slate-300 tracking-widest uppercase">Invoice</h2>
-                <p class="text-sm font-bold mt-2">Date: <span id="print-date">--</span></p>
-            </div>
-        </div>
-        
-        <!-- Print Body (Injected dynamically) -->
-        <div id="print-content-area" class="min-h-[150px]"></div>
-
-        <!-- Digital Signatures -->
-        <div class="absolute bottom-10 left-10 right-10 flex justify-between pt-10 border-t">
-            <div class="text-center">
-                <div class="h-10"></div>
-                <p class="font-bold border-t-2 border-slate-800 pt-1 text-sm">Prepared By</p>
-                <p class="text-xs text-slate-500" id="print-prep">Executive (EX-205)</p>
-            </div>
-            <div class="text-center">
-                <div class="h-10 text-green-600 font-bold text-xl" id="print-app-tick"></div>
-                <p class="font-bold border-t-2 border-slate-800 pt-1 text-sm">Approved By</p>
-                <p class="text-xs text-slate-500" id="print-app">Head of Accounts (HOA-001)</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- ==========================================
-         CORE JAVASCRIPT ENGINE
-         ========================================== -->
-    <script>
-        // --- 1. State Management ---
-        let txns = JSON.parse(localStorage.getItem('cl_txns')) || [];
-        let selectedTxns = new Set();
-        let companyProfile = JSON.parse(localStorage.getItem('cl_profile')) || { name: 'My Company', address: 'Dhaka, Bangladesh', logo: '' };
-
-        // --- 2. Initialization ---
-        window.onload = () => {
-            document.getElementById('dash-date').innerText = new Date().toLocaleDateString('en-GB');
-            applyCompanyProfile();
-            
-            // Check License
-            if (localStorage.getItem('cl_license') === 'ACTIVE') {
-                document.getElementById('view-license').classList.add('hidden-view');
-                document.getElementById('view-app').classList.remove('hidden-view');
-                switchTab('dashboard');
-            }
-        };
-
-        // --- 3. UI Routing & License ---
-        function activateTrial() {
-            localStorage.setItem('cl_license', 'ACTIVE');
-            window.location.reload();
-        }
-        function activateLicense() {
-            if(document.getElementById('license-key').value.length > 5) {
-                activateTrial();
-            } else {
-                showToast('Invalid License Key', 'error');
-            }
-        }
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden-view'));
-            document.getElementById('tab-' + tabId).classList.remove('hidden-view');
-            if(tabId === 'ledger') renderLedger();
-            if(tabId === 'dashboard') document.getElementById('dash-total-count').innerText = txns.length;
-        }
-
-        // --- 4. Transaction Form Logic ---
-        function toggleBankInput() {
-            const method = document.getElementById('txn-method').value;
-            const container = document.getElementById('bank-details-container');
-            if(method === 'Bank') container.classList.remove('hidden-view');
-            else container.classList.add('hidden-view');
-        }
-        function handleNewBankToggle() {
-            const select = document.getElementById('txn-bank-select');
-            const customInput = document.getElementById('txn-custom-bank');
-            if(select.value === 'other') customInput.classList.remove('hidden-view');
-            else customInput.classList.add('hidden-view');
-        }
-        
-        function addTxnRow() {
-            const tbody = document.getElementById('txn-items-body');
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="border p-1"><input type="text" class="w-full p-1 item-desc" placeholder="Item Name..."></td>
-                <td class="border p-1"><input type="number" class="w-full p-1 text-center item-qty" value="1" oninput="calcFormTotal()"></td>
-                <td class="border p-1"><input type="number" class="w-full p-1 text-right item-rate" value="0" oninput="calcFormTotal()"></td>
-                <td class="border p-1 font-bold text-right item-total">0.00</td>
-                <td class="border p-1 text-center"><button class="text-red-500 font-bold" onclick="this.closest('tr').remove(); calcFormTotal();">X</button></td>
-            `;
-            tbody.appendChild(tr);
-        }
-
-        function calcFormTotal() {
-            let gTotal = 0;
-            document.querySelectorAll('#txn-items-body tr').forEach(row => {
-                const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-                const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
-                const rowTotal = qty * rate;
-                row.querySelector('.item-total').innerText = rowTotal.toFixed(2);
-                gTotal += rowTotal;
-            });
-            document.getElementById('txn-grand-total').innerText = gTotal.toFixed(2);
-        }
-
-        function saveTransaction() {
-            const party = document.getElementById('txn-party').value.trim();
-            if(!party) return showToast('Party name required!', 'error');
-            
-            // XSS Security: Use DOM encoding logic implicitly by storing raw text, rendering via textContent later
-            const txn = {
-                id: Date.now(),
-                date: new Date().toLocaleDateString('en-GB'),
-                party: party,
-                amount: document.getElementById('txn-grand-total').innerText,
-                status: 'Approved' // Simulated HOA approval
-            };
-            txns.unshift(txn); // Add to top
-            localStorage.setItem('cl_txns', JSON.stringify(txns));
-            
-            showToast('Transaction Saved!', 'success');
-            document.getElementById('txn-party').value = '';
-            document.getElementById('txn-items-body').innerHTML = '';
-            calcFormTotal();
-            switchTab('ledger');
-        }
-
-        // --- 5. Ledger & Cart Logic ---
-        function renderLedger() {
-            const tbody = document.getElementById('ledger-body');
-            const searchTerm = document.getElementById('search-ledger').value.toLowerCase();
-            tbody.innerHTML = '';
-            
-            txns.filter(t => t.party.toLowerCase().includes(searchTerm) || t.id.toString().includes(searchTerm))
-                .forEach(t => {
-                const isChecked = selectedTxns.has(t.id) ? 'checked' : '';
-                tbody.innerHTML += `
-                    <tr class="border-b hover:bg-slate-100 transition">
-                        <td class="p-3 text-center"><input type="checkbox" onchange="toggleSelection(${t.id})" ${isChecked}></td>
-                        <td class="p-3">${t.date}</td>
-                        <td class="p-3 font-semibold text-blue-700">${t.party}</td>
-                        <td class="p-3 font-bold">৳${t.amount}</td>
-                        <td class="p-3"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">✅ ${t.status}</span></td>
-                        <td class="p-3 text-center">
-                            <button onclick="deleteTxn(${t.id})" class="text-red-500 hover:text-red-700 mx-1">🗑️</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            updateCartUI();
-        }
-
-        function deleteTxn(id) {
-            if(confirm("Delete this transaction?")) {
-                txns = txns.filter(t => t.id !== id);
-                selectedTxns.delete(id);
-                localStorage.setItem('cl_txns', JSON.stringify(txns));
-                renderLedger();
-                showToast('Deleted Successfully', 'error');
-            }
-        }
-
-        function toggleSelection(id) {
-            selectedTxns.has(id) ? selectedTxns.delete(id) : selectedTxns.add(id);
-            updateCartUI();
-        }
-
-        function clearSelection() {
-            selectedTxns.clear();
-            renderLedger();
-        }
-
-        function updateCartUI() {
-            const cart = document.getElementById('floating-cart');
-            document.getElementById('cart-count').innerText = selectedTxns.size;
-            if(selectedTxns.size > 0) {
-                cart.classList.remove('translate-y-full');
-            } else {
-                cart.classList.add('translate-y-full');
-            }
-        }
-
-        // --- 6. Smart Print Logic (A4/A5 Auto Scaling) ---
-        function processPrintShare() {
-            if(selectedTxns.size === 0) return;
-            
-            const printSection = document.getElementById('print-section');
-            const printArea = document.getElementById('print-content-area');
-            
-            // Auto Scale Logic
-            printSection.className = 'bg-white mx-auto relative border shadow-2xl '; 
-            if(selectedTxns.size > 3) {
-                printSection.classList.add('print-a4'); // Big Paper
-            } else {
-                printSection.classList.add('print-a5'); // Half Paper
-            }
-
-            // Build Print HTML securely
-            let html = `<table style="width: 100%; text-align: left; border-collapse: collapse; margin-bottom: 20px;">
-                <tr style="border-bottom: 2px solid #334155;"><th style="padding: 8px 0;">ID</th><th>Party Name</th><th>Date</th><th style="text-align: right;">Amount</th></tr>`;
-            
-            let total = 0;
-            Array.from(selectedTxns).forEach(id => {
-                const t = txns.find(x => x.id === id);
-                if(t) {
-                    html += `<tr style="border-bottom: 1px solid #e2e8f0;">
-                        <td style="padding: 8px 0; font-size: 12px; color: #64748b;">#${t.id.toString().slice(-4)}</td>
-                        <td style="font-weight: bold;">${t.party}</td>
-                        <td>${t.date}</td>
-                        <td style="text-align: right; font-weight: bold;">৳${t.amount}</td>
-                    </tr>`;
-                    total += parseFloat(t.amount);
-                }
-            });
-            html += `</table><h3 style="text-align: right; font-size: 1.5rem; font-weight: bold;">Total: ৳${total.toFixed(2)}</h3>`;
-            
-            printArea.innerHTML = html;
-            document.getElementById('print-date').innerText = new Date().toLocaleDateString('en-GB');
-            document.getElementById('print-app-tick').innerText = "✓ APPROVED"; // Digital Signature
-            
-            // Trigger Print
-            document.getElementById('view-app').classList.add('hidden-view');
-            printSection.classList.remove('hidden-view');
-            window.print();
-            
-            // Restore View
-            setTimeout(() => {
-                printSection.classList.add('hidden-view');
-                document.getElementById('view-app').classList.remove('hidden-view');
-                clearSelection();
-            }, 500);
-        }
-
-        // --- 7. Settings & White-label ---
-        function handleLogoUpload(e) {
-            const file = e.target.files[0];
-            if(file) {
-                const reader = new FileReader();
-                reader.onload = (e) => { companyProfile.logo = e.target.result; };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function saveSettings() {
-            // Using textContent approach indirectly via value (prevents basic XSS)
-            companyProfile.name = document.getElementById('set-comp-name').value || 'My Company';
-            companyProfile.address = document.getElementById('set-comp-address').value || 'Address here';
-            
-            localStorage.setItem('cl_profile', JSON.stringify(companyProfile));
-            applyCompanyProfile();
-            showToast('Settings Updated!', 'success');
-        }
-
-        function applyCompanyProfile() {
-            // Secure rendering using textContent
-            document.getElementById('sidebar-company-name').textContent = companyProfile.name;
-            document.getElementById('print-comp-name').textContent = companyProfile.name;
-            document.getElementById('print-comp-address').textContent = companyProfile.address;
-            
-            document.getElementById('set-comp-name').value = companyProfile.name;
-            document.getElementById('set-comp-address').value = companyProfile.address;
-
-            if(companyProfile.logo) {
-                document.getElementById('sidebar-logo').src = companyProfile.logo;
-                const pLogo = document.getElementById('print-logo');
-                pLogo.src = companyProfile.logo;
-                pLogo.style.display = 'block';
-            }
-        }
-
-        // --- 8. Helper UI Functions ---
-        function showToast(msg, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `px-6 py-3 rounded shadow-lg font-bold text-white transform transition-all duration-300 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
-            toast.textContent = msg; // Secure injection
-            const container = document.getElementById('toast-container');
-            container.appendChild(toast);
-            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
-        }
-    </script>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="company"><div class="logo"><span id="logo-letter">C</span><img id="sidebar-logo" alt="Company logo"></div><h1 id="sidebar-company">My Company</h1><small>Powered by Casherp</small></div>
+      <nav aria-label="Primary navigation">
+        <button class="nav-button active" data-page="dashboard">▦ &nbsp; Dashboard</button>
+        <button class="nav-button" data-page="transaction">＋ &nbsp; New transaction</button>
+        <button class="nav-button" data-page="ledger">▤ &nbsp; Ledger book</button>
+        <button class="nav-button" data-page="settings">⚙ &nbsp; Settings</button>
+      </nav>
+      <div class="user">Signed in as<b>Head of Accounts</b></div>
+    </aside>
+    <main>
+      <section id="page-dashboard" class="page active">
+        <div class="heading"><div><h2>Dashboard</h2><p class="sub">Your business overview at a glance.</p></div><button class="button" data-go="transaction">＋ New transaction</button></div>
+        <div class="cards"><article class="card stat"><span>Today</span><strong id="dash-date">—</strong></article><article class="card stat green"><span>Total transactions</span><strong id="dash-count">0</strong></article><article class="card stat purple"><span>Recorded value</span><strong id="dash-total">৳0.00</strong></article></div>
+        <div class="panel" style="margin-top:20px"><h3 style="margin:0 0 6px">Welcome to Casherp</h3><p class="sub">Record cash or bank transactions, select ledger entries, and print a clean statement whenever you need it.</p><div class="quick-actions"><button class="button secondary" data-go="ledger">Open ledger book</button><button class="button secondary" data-go="settings">Update company profile</button></div></div>
+      </section>
+      <section id="page-transaction" class="page">
+        <div class="heading"><div><h2>New transaction</h2><p class="sub">Add the party, payment information, and line items.</p></div></div>
+        <div class="panel"><form id="transaction-form">
+          <div class="form-grid"><div><label for="party">Party / client name *</label><input id="party" required maxlength="100" placeholder="e.g. Rahim Traders"></div><div><label for="method">Payment method *</label><select id="method"><option value="Cash">Cash</option><option value="Bank">Bank / Cheque</option></select></div><div id="bank-wrap" class="bank span-two hidden"><label for="bank-detail">Bank / cheque details *</label><input id="bank-detail" maxlength="180" placeholder="e.g. BRAC Bank — Cheque no. 123456"></div></div>
+          <table class="items"><thead><tr><th>Item description</th><th>Qty</th><th>Rate</th><th style="text-align:right">Total</th><th></th></tr></thead><tbody id="items-body"></tbody></table>
+          <button class="button secondary small" id="add-item" type="button">＋ Add item</button><div class="form-footer"><div class="total">Grand total: <b id="form-total">৳0.00</b></div><button class="button success" type="submit">Save transaction</button></div>
+        </form></div>
+      </section>
+      <section id="page-ledger" class="page">
+        <div class="heading"><div><h2>Ledger book</h2><p class="sub">Search, select, and print transaction statements.</p></div><button class="button" data-go="transaction">＋ New transaction</button></div>
+        <div class="panel" style="padding:0;overflow:hidden"><div class="toolbar"><input id="search" placeholder="Search party, date, ID, payment method, or amount…" aria-label="Search ledger"></div><div class="table-wrap"><table class="ledger"><thead><tr><th class="check"><input id="select-all" type="checkbox" aria-label="Select all visible transactions"></th><th>Date</th><th>Party name</th><th>Method</th><th>Amount</th><th>Status</th><th style="text-align:center">Action</th></tr></thead><tbody id="ledger-body"></tbody></table></div></div>
+      </section>
+      <section id="page-settings" class="page">
+        <div class="heading"><div><h2>Settings</h2><p class="sub">Company details appear on your printed statements.</p></div></div>
+        <div class="settings"><div class="panel"><h3 style="margin-top:0">Company profile</h3><form id="profile-form"><label for="company-name">Company name</label><input id="company-name" maxlength="100"><label for="company-address" style="margin-top:15px">Company address</label><textarea id="company-address" maxlength="250"></textarea><label for="company-logo" style="margin-top:15px">Company logo</label><input id="company-logo" type="file" accept="image/png,image/jpeg,image/webp"><p class="sub" style="font-size:12px">PNG, JPG, or WebP — maximum 1 MB.</p><button class="button" type="submit">Save profile</button></form></div><div class="panel"><h3 style="margin-top:0">Data controls</h3><p class="sub">Casherp saves data in this browser only. Download a backup before changing device or clearing browser data.</p><div class="quick-actions"><button class="button secondary" id="export-data" type="button">Download backup</button><button class="button danger" id="clear-data" type="button">Clear transactions</button></div><div class="notice" style="margin-top:20px">For shared access and cloud backup, connect this front end to a secure server-side database.</div></div></div>
+      </section>
+    </main>
+    <div id="cart" class="cart"><div class="cart-info"><span id="cart-count" class="count">0</span><div><small>Transactions selected</small><b id="cart-total">৳0.00</b></div></div><div class="cart-actions"><button class="button secondary" id="clear-selection" type="button">Clear selection</button><button class="button success" id="print" type="button">🖨 Print statement</button></div></div>
+  </div>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <article id="print-page"></article>
+  <script>
+    'use strict';
+    const KEYS = { profile:'casherp_profile_v1', transactions:'casherp_transactions_v1' };
+    const defaultProfile = { name:'My Company', address:'Dhaka, Bangladesh', logo:'' };
+    let profile = load(KEYS.profile, defaultProfile);
+    let transactions = load(KEYS.transactions, []);
+    let selected = new Set();
+    function load(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } }
+    function save(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+    function escapeHtml(value) { const el = document.createElement('span'); el.textContent = String(value ?? ''); return el.innerHTML; }
+    function money(value) { return `৳${Number(value || 0).toLocaleString('en-BD',{minimumFractionDigits:2,maximumFractionDigits:2})}`; }
+    function today() { return new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+    function createId() { return `${Date.now()}-${Math.random().toString(16).slice(2,8)}`; }
+    function toast(message, error=false) { const node = document.createElement('div'); node.className = `toast${error ? ' error' : ''}`; node.textContent = message; document.getElementById('toasts').append(node); setTimeout(() => node.remove(), 3200); }
+    function showPage(page) { document.querySelectorAll('.page').forEach(node => node.classList.toggle('active',node.id === `page-${page}`)); document.querySelectorAll('.nav-button').forEach(node => node.classList.toggle('active',node.dataset.page === page)); if(page === 'ledger') renderLedger(); if(page === 'dashboard') renderDashboard(); window.scrollTo({top:0,behavior:'smooth'}); }
+    document.querySelectorAll('[data-page]').forEach(button => button.addEventListener('click', () => showPage(button.dataset.page)));
+    document.querySelectorAll('[data-go]').forEach(button => button.addEventListener('click', () => showPage(button.dataset.go)));
+    function renderDashboard() { document.getElementById('dash-date').textContent = today(); document.getElementById('dash-count').textContent = transactions.length; document.getElementById('dash-total').textContent = money(transactions.reduce((sum,txn) => sum + Number(txn.amount),0)); }
+    function renderProfile() { document.getElementById('sidebar-company').textContent = profile.name || defaultProfile.name; document.getElementById('logo-letter').textContent = (profile.name || 'C').trim().charAt(0).toUpperCase(); const logo = document.getElementById('sidebar-logo'); logo.src = profile.logo || ''; logo.style.display = profile.logo ? 'block' : 'none'; document.getElementById('company-name').value = profile.name || ''; document.getElementById('company-address').value = profile.address || ''; }
+    const itemBody = document.getElementById('items-body');
+    function addItem(item={description:'',qty:1,rate:0}) { const row = document.createElement('tr'); row.innerHTML = `<td><input class="description" maxlength="140" value="${escapeHtml(item.description)}" placeholder="Item or service"></td><td><input class="qty" type="number" min="0.01" step="0.01" value="${Number(item.qty)||1}"></td><td><input class="rate" type="number" min="0" step="0.01" value="${Number(item.rate)||0}"></td><td class="line-total">৳0.00</td><td><button class="remove" type="button" aria-label="Remove item">×</button></td>`; row.querySelectorAll('input').forEach(input => input.addEventListener('input', updateTotal)); row.querySelector('.remove').addEventListener('click', () => { if(itemBody.rows.length === 1) return toast('A transaction needs at least one item.',true); row.remove(); updateTotal(); }); itemBody.append(row); updateTotal(); }
+    function getItems() { return [...itemBody.rows].map(row => ({description:row.querySelector('.description').value.trim(),qty:Number(row.querySelector('.qty').value)||0,rate:Number(row.querySelector('.rate').value)||0})).filter(item => item.description || item.qty || item.rate); }
+    function updateTotal() { let total = 0; [...itemBody.rows].forEach(row => { const amount = (Number(row.querySelector('.qty').value)||0) * (Number(row.querySelector('.rate').value)||0); row.querySelector('.line-total').textContent = money(amount); total += amount; }); document.getElementById('form-total').textContent = money(total); return total; }
+    document.getElementById('add-item').addEventListener('click', () => addItem());
+    document.getElementById('method').addEventListener('change', event => document.getElementById('bank-wrap').classList.toggle('hidden',event.target.value !== 'Bank'));
+    document.getElementById('transaction-form').addEventListener('submit', event => { event.preventDefault(); const party=document.getElementById('party').value.trim(); const method=document.getElementById('method').value; const bankDetail=document.getElementById('bank-detail').value.trim(); const items=getItems(); const amount=updateTotal(); if(!party) return toast('Party / client name is required.',true); if(!items.length || items.some(item => !item.description || item.qty <= 0 || item.rate < 0)) return toast('Complete every item description, quantity, and rate.',true); if(amount <= 0) return toast('Transaction amount must be greater than zero.',true); if(method === 'Bank' && !bankDetail) return toast('Enter bank or cheque details.',true); transactions.unshift({id:createId(),date:today(),party,method,bankDetail:method === 'Bank' ? bankDetail : '',items,amount,status:'Approved'}); save(KEYS.transactions,transactions); event.target.reset(); itemBody.innerHTML=''; addItem(); document.getElementById('bank-wrap').classList.add('hidden'); renderDashboard(); toast('Transaction saved.'); showPage('ledger'); });
+    function visibleTransactions() { const term = document.getElementById('search').value.trim().toLowerCase(); return transactions.filter(txn => [txn.id,txn.date,txn.party,txn.method,txn.amount].some(value => String(value).toLowerCase().includes(term))); }
+    function renderLedger() { const body=document.getElementById('ledger-body'); const visible=visibleTransactions(); body.innerHTML=''; if(!visible.length) { body.innerHTML='<tr><td class="empty" colspan="7">No transactions found. Add your first transaction to get started.</td></tr>'; return updateCart(); } visible.forEach(txn => { const row=document.createElement('tr'); row.innerHTML=`<td class="check"><input type="checkbox" aria-label="Select ${escapeHtml(txn.party)}" ${selected.has(txn.id) ? 'checked' : ''}></td><td>${escapeHtml(txn.date)}</td><td><span class="party">${escapeHtml(txn.party)}</span></td><td>${escapeHtml(txn.method)}${txn.bankDetail ? '<br><small style="color:#64748b">Bank details saved</small>' : ''}</td><td class="money">${money(txn.amount)}</td><td><span class="badge">✓ ${escapeHtml(txn.status)}</span></td><td style="text-align:center"><button class="button danger small" type="button">Delete</button></td>`; row.querySelector('input').addEventListener('change',event => { event.target.checked ? selected.add(txn.id) : selected.delete(txn.id); updateCart(); }); row.querySelector('button').addEventListener('click', () => deleteTransaction(txn.id)); body.append(row); }); updateCart(); }
+    function deleteTransaction(id) { const txn=transactions.find(item => item.id === id); if(!txn || !confirm(`Delete the transaction for ${txn.party}?`)) return; transactions=transactions.filter(item => item.id !== id); selected.delete(id); save(KEYS.transactions,transactions); renderLedger(); renderDashboard(); toast('Transaction deleted.',true); }
+    function updateCart() { const visible=visibleTransactions(); const included=visible.filter(txn => selected.has(txn.id)); const box=document.getElementById('select-all'); box.checked=visible.length>0 && included.length===visible.length; box.indeterminate=included.length>0 && included.length<visible.length; const chosen=transactions.filter(txn => selected.has(txn.id)); document.getElementById('cart-count').textContent=chosen.length; document.getElementById('cart-total').textContent=money(chosen.reduce((sum,txn)=>sum+Number(txn.amount),0)); document.getElementById('cart').classList.toggle('visible',chosen.length>0); }
+    document.getElementById('search').addEventListener('input',renderLedger);
+    document.getElementById('select-all').addEventListener('change',event => { visibleTransactions().forEach(txn => event.target.checked ? selected.add(txn.id) : selected.delete(txn.id)); renderLedger(); });
+    document.getElementById('clear-selection').addEventListener('click',() => { selected.clear(); renderLedger(); });
+    document.getElementById('print').addEventListener('click',() => { const chosen=transactions.filter(txn=>selected.has(txn.id)); if(!chosen.length) return; const total=chosen.reduce((sum,txn)=>sum+Number(txn.amount),0); const rows=chosen.map(txn=>`<tr><td>#${escapeHtml(txn.id.slice(-6).toUpperCase())}</td><td><strong>${escapeHtml(txn.party)}</strong></td><td>${escapeHtml(txn.date)}</td><td>${escapeHtml(txn.method)}${txn.bankDetail ? `<br><small>${escapeHtml(txn.bankDetail)}</small>` : ''}</td><td style="text-align:right"><strong>${money(txn.amount)}</strong></td></tr>`).join(''); document.getElementById('print-page').innerHTML=`<div style="max-width:760px;margin:0 auto;padding:35px;font-family:Arial,sans-serif"><header style="display:flex;justify-content:space-between;padding-bottom:17px;border-bottom:2px solid #0f172a"><div>${profile.logo?`<img src="${escapeHtml(profile.logo)}" style="max-height:55px;max-width:150px;object-fit:contain"><br>`:''}<strong style="font-size:23px">${escapeHtml(profile.name)}</strong><p style="margin:5px 0;color:#475569;white-space:pre-line">${escapeHtml(profile.address)}</p></div><div style="text-align:right"><h1 style="margin:0;color:#94a3b8;font-size:27px;letter-spacing:2px">STATEMENT</h1><p>Issued: ${escapeHtml(today())}</p></div></header><table style="width:100%;margin-top:25px;border-collapse:collapse;text-align:left"><thead><tr style="border-bottom:2px solid #0f172a"><th style="padding:9px 0">ID</th><th>Party</th><th>Date</th><th>Method</th><th style="text-align:right">Amount</th></tr></thead><tbody>${rows}</tbody></table><h2 style="margin-top:24px;text-align:right">Total: ${money(total)}</h2><footer style="display:flex;justify-content:space-between;margin-top:85px"><span style="border-top:1px solid #0f172a;padding-top:6px">Prepared by</span><span style="border-top:1px solid #0f172a;padding-top:6px">Approved by</span></footer></div>`; window.print(); });
+    document.getElementById('profile-form').addEventListener('submit',event=>{ event.preventDefault(); profile.name=document.getElementById('company-name').value.trim()||defaultProfile.name; profile.address=document.getElementById('company-address').value.trim()||defaultProfile.address; save(KEYS.profile,profile); renderProfile(); toast('Company profile saved.'); });
+    document.getElementById('company-logo').addEventListener('change',event=>{ const file=event.target.files?.[0]; if(!file) return; if(file.size>1024*1024) { event.target.value=''; return toast('Please choose a logo smaller than 1 MB.',true); } const reader=new FileReader(); reader.addEventListener('load',()=>{ profile.logo=reader.result; save(KEYS.profile,profile); renderProfile(); toast('Logo saved.'); }); reader.readAsDataURL(file); });
+    document.getElementById('export-data').addEventListener('click',()=>{ const blob=new Blob([JSON.stringify({app:'Casherp',exportedAt:new Date().toISOString(),profile,transactions},null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const link=document.createElement('a'); link.href=url; link.download=`casherp-backup-${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(url); });
+    document.getElementById('clear-data').addEventListener('click',()=>{ if(!confirm('Permanently delete every Casherp transaction from this browser? Export a backup first.')) return; transactions=[]; selected.clear(); save(KEYS.transactions,transactions); renderLedger(); renderDashboard(); toast('All transactions cleared.',true); });
+    addItem(); renderProfile(); renderDashboard(); renderLedger();
+  </script>
 </body>
 </html>
